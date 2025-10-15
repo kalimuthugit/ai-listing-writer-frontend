@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 
-export const runtime = "edge"; // optional: faster cold start
+export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -11,20 +11,17 @@ export async function POST(req: NextRequest) {
 
   const response = await fetch(`${backendUrl}/generate-listing`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // ✅ Convert the object into a real JSON string
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      property_type: body.property_type || "",
-      bedrooms: Number(body.bedrooms) || 0,
-      bathrooms: Number(body.bathrooms) || 0,
-      features: body.features || "",
-      temperature: body.temperature ?? 0.3,
+      property_type: body.property_type,
+      bedrooms: Number(body.bedrooms),
+      bathrooms: Number(body.bathrooms),
+      features: body.features,
+      temperature: body.temperature,
     }),
   });
 
-  // ✅ Pass the streamed response directly to frontend
+  // Stream response text back to frontend
   return new Response(response.body, {
     headers: { "Content-Type": "text/plain" },
   });

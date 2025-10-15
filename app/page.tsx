@@ -12,12 +12,14 @@ export default function Home() {
   const [listing, setListing] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // ✅ STREAMING GENERATION HANDLER
+  // ✅ STREAMING + FALLBACK HANDLER (final fix)
   const handleGenerate = async () => {
     setLoading(true);
     setListing('');
 
     try {
+      console.log('Sending request to /api/generate-listing...');
+
       const response = await fetch('/api/generate-listing', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -26,30 +28,49 @@ export default function Home() {
           bedrooms,
           bathrooms,
           features,
-          temperature
+          temperature,
         }),
       });
 
-      if (!response.body) {
-        setListing('No response body received.');
+      if (!response.ok) {
+        console.error('Response not OK:', response.status, response.statusText);
+        setListing(`Server Error (${response.status}) - Please try again.`);
         return;
       }
 
-      const reader = response.body.getReader();
+      // ✅ Clone the response to allow fallback read later
+      const responseClone = response.clone();
+
+      const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let output = '';
+      let gotChunk = false;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        output += chunk;
-        setListing(output); // live update text as it streams
+      if (reader) {
+        // Stream the text as it arrives
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          if (chunk) {
+            gotChunk = true;
+            output += chunk;
+            setListing(output);
+          }
+        }
       }
+
+      // ✅ Fallback: use cloned response if no streamed chunks were received
+      if (!gotChunk) {
+        const textResponse = await responseClone.text();
+        console.log('Fallback text response:', textResponse);
+        setListing(textResponse || 'No content received.');
+      }
+
+      console.log('✅ Generation complete.');
     } catch (error) {
-      console.error(error);
-      setListing('Something went wrong. Please try again.');
+      console.error('Error generating listing:', error);
+      setListing('Something went wrong while generating the listing.');
     } finally {
       setLoading(false);
     }
