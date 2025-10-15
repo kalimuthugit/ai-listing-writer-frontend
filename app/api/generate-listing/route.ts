@@ -1,36 +1,31 @@
 import { NextRequest } from "next/server";
 
-export const runtime = "edge"; // optional: for faster cold start
+export const runtime = "edge"; // optional: faster cold start
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+  const backendUrl =
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    "https://ai-listing-writer-backend.onrender.com";
+
   const response = await fetch(`${backendUrl}/generate-listing`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  // Stream data directly back to frontend
-  const stream = new ReadableStream({
-    async start(controller) {
-      const reader = response.body?.getReader();
-      if (!reader) {
-        controller.close();
-        return;
-      }
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        controller.enqueue(value);
-      }
-      controller.close();
+    headers: {
+      "Content-Type": "application/json",
     },
+    // ✅ Convert the object into a real JSON string
+    body: JSON.stringify({
+      property_type: body.property_type || "",
+      bedrooms: Number(body.bedrooms) || 0,
+      bathrooms: Number(body.bathrooms) || 0,
+      features: body.features || "",
+      temperature: body.temperature ?? 0.3,
+    }),
   });
 
-  return new Response(stream, {
+  // ✅ Pass the streamed response directly to frontend
+  return new Response(response.body, {
     headers: { "Content-Type": "text/plain" },
   });
 }
