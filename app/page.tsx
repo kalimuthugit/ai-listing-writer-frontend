@@ -1,90 +1,149 @@
-"use client";
-import { useState } from "react";
-import axios from "axios";
+'use client';
+
+import { useState } from 'react';
+import axios from 'axios';
+import { Slider } from '@mui/material';
 
 export default function Home() {
-  const [propertyType, setPropertyType] = useState<string>("House");
-  const [bedrooms, setBedrooms] = useState<number>(3);
-  const [bathrooms, setBathrooms] = useState<number>(2);
-  const [features, setFeatures] = useState<string>("");
-  const [listing, setListing] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [propertyType, setPropertyType] = useState('');
+  const [bedrooms, setBedrooms] = useState(3);
+  const [bathrooms, setBathrooms] = useState(2);
+  const [features, setFeatures] = useState('');
+  const [temperature, setTemperature] = useState(0.7);
+  const [listing, setListing] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const generateListing = async () => {
+  const handleGenerate = async () => {
     setLoading(true);
+    setListing('');
+
     try {
-      const res = await axios.post("https://ai-listing-writer-backend.onrender.com/generate-listing", {
-        property_type: propertyType,
-        bedrooms,
-        bathrooms,
-        features,
-      });
+      const res = await axios.post(
+        'https://ai-listing-writer-backend.onrender.com/generate-listing',
+        {
+          property_type: propertyType,
+          bedrooms,
+          bathrooms,
+          features,
+          temperature
+        }
+      );
       setListing(res.data.listing);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
+      setListing('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col items-center p-6">
-      <h1 className="text-3xl font-bold text-teal-700 mb-6">
+    <div style={{
+      fontFamily: 'Inter, sans-serif',
+      background: '#F8FAFC',
+      minHeight: '100vh',
+      padding: '2rem',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+    }}>
+      <h1 style={{ color: '#00796B', fontSize: '2rem', fontWeight: 700 }}>
         🏡 AI Listing Writer
       </h1>
-      <div className="bg-white p-6 rounded-2xl shadow w-full max-w-md">
+
+      <div style={{
+        width: '100%',
+        maxWidth: '600px',
+        background: 'white',
+        padding: '1.5rem',
+        borderRadius: '16px',
+        boxShadow: '0 6px 20px rgba(0,0,0,0.1)',
+        marginTop: '1rem'
+      }}>
+        <h3>Property Details</h3>
+
         <label>Property Type</label>
         <input
+          type="text"
+          placeholder="e.g., House"
           value={propertyType}
           onChange={(e) => setPropertyType(e.target.value)}
-          className="border p-2 w-full mb-3"
+          style={{ width: '100%', padding: '0.6rem', marginBottom: '0.8rem', borderRadius: '8px', border: '1px solid #ccc' }}
         />
 
-        <div className="flex justify-between gap-4">
-          <div>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 1 }}>
             <label>Bedrooms</label>
             <input
               type="number"
               value={bedrooms}
               onChange={(e) => setBedrooms(Number(e.target.value))}
-              className="border p-2 w-full"
+              style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #ccc' }}
             />
           </div>
-          <div>
+          <div style={{ flex: 1 }}>
             <label>Bathrooms</label>
             <input
               type="number"
               value={bathrooms}
               onChange={(e) => setBathrooms(Number(e.target.value))}
-              className="border p-2 w-full"
+              style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #ccc' }}
             />
           </div>
         </div>
 
-        <label className="mt-3 block">Key Features</label>
+        <label style={{ marginTop: '0.8rem', display: 'block' }}>Key Features</label>
         <textarea
+          rows={3}
+          placeholder="e.g., Pool, Modern kitchen, Double garage"
           value={features}
           onChange={(e) => setFeatures(e.target.value)}
-          className="border p-2 w-full mb-3"
+          style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid #ccc' }}
+        />
+
+        <label style={{ marginTop: '1rem' }}>✨ Creativity (Temperature): {temperature}</label>
+        <Slider
+          min={0}
+          max={1}
+          step={0.1}
+          value={temperature}
+          onChange={(e, newVal) => setTemperature(newVal as number)}
+          valueLabelDisplay="auto"
         />
 
         <button
-          onClick={generateListing}
-          className="bg-teal-600 text-white py-2 px-4 rounded w-full"
+          onClick={handleGenerate}
           disabled={loading}
+          style={{
+            width: '100%',
+            backgroundColor: '#00796B',
+            color: 'white',
+            padding: '0.8rem',
+            borderRadius: '8px',
+            marginTop: '1rem',
+            cursor: 'pointer',
+            border: 'none',
+            fontWeight: 600
+          }}
         >
-          {loading ? "Generating..." : "✨ Generate Listing"}
+          {loading ? 'Generating...' : '✨ Generate Listing'}
         </button>
       </div>
 
       {listing && (
-        <div className="bg-white mt-6 p-6 rounded-2xl shadow max-w-md w-full">
-          <h2 className="text-xl font-semibold text-teal-600 mb-2">
-            Generated Listing:
-          </h2>
-          <p>{listing}</p>
+        <div style={{
+          width: '100%',
+          maxWidth: '600px',
+          background: 'white',
+          padding: '1.5rem',
+          borderRadius: '16px',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.1)',
+          marginTop: '1.5rem'
+        }}>
+          <h3 style={{ color: '#00796B' }}>Generated Listing:</h3>
+          <p style={{ whiteSpace: 'pre-wrap' }}>{listing}</p>
         </div>
       )}
-    </main>
+    </div>
   );
 }
