@@ -13,7 +13,7 @@ export default function Home() {
   const generateListing = async () => {
     setLoading(true);
     try {
-      const res = await axios.post("https://ai-listing-api.onrender.com/generate-listing", {
+      const res = await axios.post("https://ai-listing-writer-backend.onrender.com/generate-listing", {
         property_type: propertyType,
         bedrooms,
         bathrooms,
